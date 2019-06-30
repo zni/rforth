@@ -84,7 +84,6 @@ impl Machine {
 
 fn handle_line(machine: &mut Machine, line: &String) {
     let words = line.split_whitespace();
-    let mut values: Vec<Value> = Vec::new();
     for word in words {
         match word.parse::<i32>() {
             Ok(num) => {
