@@ -2,6 +2,12 @@ use std::collections::HashMap;
 use std::io;
 use std::process;
 
+#[derive(Debug, Clone)]
+enum Value {
+    Word(String),
+    Number(i32)
+}
+
 enum ErrorType {
     WordNotFound,
     StackUnderflow
@@ -9,7 +15,7 @@ enum ErrorType {
 
 #[derive(Debug)]
 struct Machine {
-    dictionary: HashMap<String, Vec<String>>,
+    dictionary: HashMap<String, Vec<Value>>,
     stack: Vec<i32>
 }
 
@@ -41,21 +47,37 @@ impl Machine {
             None => panic!("No word found.")
         };
 
-        let mut definition: Vec<String> = Vec::new();
+        let mut definition: Vec<Value> = Vec::new();
         for word in words {
             if word == ";" {
                 break;
-            } else {
-                definition.push(word.to_string());
             }
+
+            let token = match word.parse::<i32>() {
+                Ok(num) => {
+                    Value::Number(num)
+                },
+                Err(_) => {
+                    Value::Word(word.to_string())
+                }
+            };
+            definition.push(token);
         }
 
         self.dictionary.insert(name, definition);
     }
 
 
-    fn execute(&mut self, word: &String) -> Result<(), ErrorType> {
-        match word.as_ref() {
+    fn execute(&mut self, value: &Value) -> Result<(), ErrorType> {
+        let word = match value {
+            Value::Number(n) => {
+                self.push(*n);
+                return Ok(());
+            },
+            Value::Word(s) => s.as_str(),
+        };
+
+        match word {
             "+" => {
                 let a = match self.pop() {
                     Some(n) => n,
@@ -192,7 +214,7 @@ impl Machine {
         }
     }
 
-    fn execute_function(&mut self, function: &Vec<String>) -> Result<(), ErrorType>  {
+    fn execute_function(&mut self, function: &Vec<Value>) -> Result<(), ErrorType>  {
         for word in function {
             match self.execute(word) {
                 Ok(_) => continue,
@@ -207,27 +229,36 @@ impl Machine {
 fn handle_line(machine: &mut Machine, line: &String) {
     let mut had_error: bool = false;
     let words = line.split_whitespace();
+    let mut input: Vec<Value> = Vec::new();
     for word in words {
-        if word == ":" {
-            machine.compile(line);
-            break;
+        let token = match word.parse::<i32>() {
+            Ok(num) => {
+                Value::Number(num)
+            },
+            Err(_) => {
+                Value::Word(word.to_string())
+            }
+        };
+
+        input.push(token);
+    }
+
+    for token in input {
+        if let Value::Word(word) = &token {
+            if word == ":" {
+                machine.compile(line);
+                break;
+            }
         }
 
-        match word.parse::<i32>() {
-            Ok(num) => {
-                machine.push(num);
+        match machine.execute(&token) {
+            Ok(_) => (),
+            Err(ErrorType::WordNotFound) => {
+                had_error = true;
             },
-            Err(_)  => {
-                match machine.execute(&word.to_string()) {
-                    Ok(_) => (),
-                    Err(ErrorType::WordNotFound) => {
-                        had_error = true;
-                    },
-                    Err(ErrorType::StackUnderflow) => {
-                        println!("stack underflow");
-                        had_error = true;
-                    },
-                }
+            Err(ErrorType::StackUnderflow) => {
+                println!("stack underflow");
+                had_error = true;
             },
         }
     }
