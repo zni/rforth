@@ -9,6 +9,7 @@ enum Value {
 }
 
 enum ErrorType {
+    CompilationError,
     WordNotFound,
     StackUnderflow
 }
@@ -35,7 +36,7 @@ impl Machine {
         self.stack.pop()
     }
 
-    fn compile(&mut self, line: &String) {
+    fn compile(&mut self, line: &String) -> Result<(), ErrorType> {
         let mut words = line.split_whitespace();
 
         // Skip ':'.
@@ -44,7 +45,7 @@ impl Machine {
         // Get definition name.
         let name = match words.next() {
             Some(n) => n.to_string(),
-            None => panic!("No word found.")
+            None => return Err(ErrorType::CompilationError)
         };
 
         let mut definition: Vec<Value> = Vec::new();
@@ -65,6 +66,7 @@ impl Machine {
         }
 
         self.dictionary.insert(name, definition);
+        Ok(())
     }
 
 
@@ -198,7 +200,61 @@ impl Machine {
             ".s" => {
                 println!("{:?}", self.stack);
                 Ok(())
-            }
+            },
+            "=" => {
+                let a = match self.pop() {
+                    Some(n) => n,
+                    None => return Err(ErrorType::StackUnderflow)
+                };
+                let b = match self.pop() {
+                    Some(n) => n,
+                    None => return Err(ErrorType::StackUnderflow)
+                };
+
+                if a == b {
+                    self.push(-1);
+                } else {
+                    self.push(0);
+                }
+
+                Ok(())
+            },
+            ">" => {
+                let a = match self.pop() {
+                    Some(n) => n,
+                    None => return Err(ErrorType::StackUnderflow)
+                };
+                let b = match self.pop() {
+                    Some(n) => n,
+                    None => return Err(ErrorType::StackUnderflow)
+                };
+
+                if a > b {
+                    self.push(-1);
+                } else {
+                    self.push(0);
+                }
+
+                Ok(())
+            },
+            "<" => {
+                let a = match self.pop() {
+                    Some(n) => n,
+                    None => return Err(ErrorType::StackUnderflow)
+                };
+                let b = match self.pop() {
+                    Some(n) => n,
+                    None => return Err(ErrorType::StackUnderflow)
+                };
+
+                if a < b {
+                    self.push(-1);
+                } else {
+                    self.push(0);
+                }
+
+                Ok(())
+            },
             _ => {
                 match self.dictionary.get(word) {
                     Some(f) => {
@@ -246,8 +302,15 @@ fn handle_line(machine: &mut Machine, line: &String) {
     for token in input {
         if let Value::Word(word) = &token {
             if word == ":" {
-                machine.compile(line);
-                break;
+                match machine.compile(line) {
+                    Ok(_) => break,
+                    Err(ErrorType::CompilationError) => {
+                        println!("compilation error");
+                        had_error = true;
+                        break;
+                    },
+                    _ => ()
+                }
             }
         }
 
@@ -260,6 +323,7 @@ fn handle_line(machine: &mut Machine, line: &String) {
                 println!("stack underflow");
                 had_error = true;
             },
+            _ => (),
         }
     }
 
