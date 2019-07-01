@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::io;
 use std::process;
 
@@ -8,12 +9,14 @@ enum ErrorType {
 
 #[derive(Debug)]
 struct Machine {
+    dictionary: HashMap<String, Vec<String>>,
     stack: Vec<i32>
 }
 
 impl Machine {
     fn new() -> Machine {
         Machine {
+            dictionary: HashMap::new(),
             stack: Vec::new()
         }
     }
@@ -25,6 +28,31 @@ impl Machine {
     fn pop(&mut self) -> Option<i32> {
         self.stack.pop()
     }
+
+    fn compile(&mut self, line: &String) {
+        let mut words = line.split_whitespace();
+
+        // Skip ':'.
+        words.next();
+
+        // Get definition name.
+        let name = match words.next() {
+            Some(n) => n.to_string(),
+            None => panic!("No word found.")
+        };
+
+        let mut definition: Vec<String> = Vec::new();
+        for word in words {
+            if word == ";" {
+                break;
+            } else {
+                definition.push(word.to_string());
+            }
+        }
+
+        self.dictionary.insert(name, definition);
+    }
+
 
     fn execute(&mut self, word: &String) -> Result<(), ErrorType> {
         match word.as_ref() {
@@ -150,10 +178,29 @@ impl Machine {
                 Ok(())
             }
             _ => {
-                println!("{}?", word);
-                Err(ErrorType::WordNotFound)
+                match self.dictionary.get(word) {
+                    Some(f) => {
+                        let function = f.clone();
+                        return self.execute_function(&function);
+                    },
+                    None => {
+                        println!("{}?", word);
+                        Err(ErrorType::WordNotFound)
+                    }
+                }
             },
         }
+    }
+
+    fn execute_function(&mut self, function: &Vec<String>) -> Result<(), ErrorType>  {
+        for word in function {
+            match self.execute(word) {
+                Ok(_) => continue,
+                Err(e) => return Err(e)
+            }
+        }
+
+        return Ok(());
     }
 }
 
@@ -161,6 +208,11 @@ fn handle_line(machine: &mut Machine, line: &String) {
     let mut had_error: bool = false;
     let words = line.split_whitespace();
     for word in words {
+        if word == ":" {
+            machine.compile(line);
+            break;
+        }
+
         match word.parse::<i32>() {
             Ok(num) => {
                 machine.push(num);
@@ -196,5 +248,7 @@ fn main() {
         }
 
         handle_line(&mut machine, &line);
+
+        println!("{:?}", machine);
     }
 }
