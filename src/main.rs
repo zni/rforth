@@ -282,8 +282,7 @@ impl Machine {
     }
 }
 
-fn handle_line(machine: &mut Machine, line: &String) {
-    let mut had_error: bool = false;
+fn tokenize_input(line: &String) -> Vec<Value> {
     let words = line.split_whitespace();
     let mut input: Vec<Value> = Vec::new();
     for word in words {
@@ -299,6 +298,13 @@ fn handle_line(machine: &mut Machine, line: &String) {
         input.push(token);
     }
 
+    input
+}
+
+fn run(machine: &mut Machine, line: &String) {
+    let input = tokenize_input(line);
+
+    let mut had_error: bool = false;
     for token in input {
         if let Value::Word(word) = &token {
             if word == ":" {
@@ -342,7 +348,7 @@ fn main() {
             process::exit(1);
         }
 
-        handle_line(&mut machine, &line);
+        run(&mut machine, &line);
 
         println!("{:?}", machine);
     }
