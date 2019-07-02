@@ -70,7 +70,5 @@ fn main() {
         }
 
         run(&mut machine, &line);
-
-        println!("{:?}", machine);
     }
 }

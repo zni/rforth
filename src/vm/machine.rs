@@ -4,20 +4,33 @@ use crate::vm::instructions;
 use crate::vm::ErrorType;
 use crate::vm::Value;
 
-#[derive(Debug)]
-pub struct Machine {
-    pub dictionary: HashMap<String, Vec<Value>>,
-    pub stack: Vec<i32>
-}
-
-enum Function {
+pub enum Function {
     Builtin(fn(&mut Machine) -> Result<(), ErrorType>),
     UserDefined(Vec<Value>)
 }
 
+pub struct Machine {
+    pub dictionary: HashMap<String, Function>,
+    pub stack: Vec<i32>
+}
+
 impl Machine {
     pub fn new() -> Machine {
-        let dictionary = HashMap::new();
+        let mut dictionary = HashMap::new();
+        dictionary.insert(String::from("+"), Function::Builtin(instructions::add));
+        dictionary.insert(String::from("-"), Function::Builtin(instructions::sub));
+        dictionary.insert(String::from("*"), Function::Builtin(instructions::mult));
+        dictionary.insert(String::from("/"), Function::Builtin(instructions::div));
+        dictionary.insert(String::from("dup"), Function::Builtin(instructions::dup));
+        dictionary.insert(String::from("drop"), Function::Builtin(instructions::drop));
+        dictionary.insert(String::from("swap"), Function::Builtin(instructions::swap));
+        dictionary.insert(String::from("over"), Function::Builtin(instructions::over));
+        dictionary.insert(String::from("rot"), Function::Builtin(instructions::rot));
+        dictionary.insert(String::from("."), Function::Builtin(instructions::dot));
+        dictionary.insert(String::from(".s"), Function::Builtin(instructions::sdot));
+        dictionary.insert(String::from("="), Function::Builtin(instructions::eq));
+        dictionary.insert(String::from(">"), Function::Builtin(instructions::greater_than));
+        dictionary.insert(String::from("<"), Function::Builtin(instructions::less_than));
         Machine {
             dictionary,
             stack: Vec::new()
@@ -61,7 +74,7 @@ impl Machine {
             definition.push(token);
         }
 
-        self.dictionary.insert(name, definition);
+        self.dictionary.insert(name, Function::UserDefined(definition));
         Ok(())
     }
 
@@ -72,36 +85,19 @@ impl Machine {
                 self.push(*n);
                 return Ok(());
             },
-            Value::Word(s) => s.as_str(),
+            Value::Word(s) => s,
         };
 
-        match word {
-            "+" => instructions::add(self),
-            "-" => instructions::sub(self),
-            "*" => instructions::mult(self),
-            "/" => instructions::div(self),
-            "dup" => instructions::dup(self),
-            "drop" => instructions::drop(self),
-            "swap" => instructions::swap(self),
-            "over" => instructions::over(self),
-            "rot" => instructions::rot(self),
-            "." => instructions::dot(self),
-            ".s" => instructions::sdot(self),
-            "=" => instructions::eq(self),
-            ">" => instructions::greater_than(self),
-            "<" => instructions::less_than(self),
-            _ => {
-                match self.dictionary.get(word) {
-                    Some(f) => {
-                        let function = f.clone();
-                        return self.execute_function(&function);
-                    },
-                    None => {
-                        println!("{}?", word);
-                        Err(ErrorType::WordNotFound)
-                    }
-                }
+        match self.dictionary.get(word) {
+            Some(Function::Builtin(f)) => f(self),
+            Some(Function::UserDefined(f)) => {
+                let function = f.clone();
+                return self.execute_function(&function);
             },
+            None => {
+                println!("{}?", word);
+                Err(ErrorType::WordNotFound)
+            }
         }
     }
 
