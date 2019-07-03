@@ -24,6 +24,8 @@ pub struct Machine {
     pub dictionary: HashMap<String, Function>,
     pub stack: Vec<i32>,
     pub return_stack: Vec<i32>,
+    pub sp: usize,
+    pub data: Vec<Value>,
 }
 
 impl Machine {
@@ -48,7 +50,9 @@ impl Machine {
         dictionary.insert(String::from("and"), Function::Builtin(instructions::and));
         dictionary.insert(String::from("or"), Function::Builtin(instructions::or));
         dictionary.insert(String::from("invert"), Function::Builtin(instructions::invert));
-        dictionary.insert(String::from("branch0"), Function::Builtin(instructions::branch0));
+        dictionary.insert(String::from("clearstack"), Function::Builtin(instructions::clearstack));
+        dictionary.insert(String::from("0branch"), Function::Builtin(instructions::branch0));
+        dictionary.insert(String::from("branch"), Function::Builtin(instructions::branch));
         dictionary.insert(String::from("if"), Function::Action);
         dictionary.insert(String::from("then"), Function::Action);
         dictionary.insert(String::from("else"), Function::Action);
@@ -61,6 +65,8 @@ impl Machine {
             dictionary,
             stack: Vec::new(),
             return_stack: Vec::new(),
+            sp: 0,
+            data: Vec::new(),
         }
     }
 
@@ -73,20 +79,30 @@ impl Machine {
     }
 
     pub fn execute(&mut self, input: &Vec<Value>) -> Result<(), ErrorType> {
-        for value in input {
+        self.sp = 0;
+        self.data = input.clone();
+        while self.sp < input.len() {
+
+            // Get value.
+            let value = &input[self.sp];
+            self.sp += 1;
+
+            // Convert the current cell to string.
             let current_word = match value {
                 Value::Number(n) => n.to_string(),
                 Value::Word(w) => w.clone(),
             };
 
+            // If we're in compile mode, keep compiling.
             if self.compile_mode && current_word != ";" {
-                if let Err(e) = self.compile_word(value) {
+                if let Err(e) = self.compile_word(&value) {
                     return Err(e);
                 }
 
                 continue;
             }
 
+            // Get the current word.
             let word = match value {
                 Value::Number(n) => {
                     self.push(*n);

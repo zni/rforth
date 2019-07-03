@@ -1,5 +1,6 @@
 use crate::vm::machine::Machine;
 use crate::vm::ErrorType;
+use crate::vm::Value;
 
 pub fn add(machine: &mut Machine) -> Result<(), ErrorType> {
     let a = match machine.pop() {
@@ -231,12 +232,52 @@ pub fn invert(machine: &mut Machine) -> Result<(), ErrorType> {
     Ok(())
 }
 
-// TODO
+pub fn clearstack(machine: &mut Machine) -> Result<(), ErrorType> {
+    machine.stack.clear();
+    Ok(())
+}
+
 pub fn branch0(machine: &mut Machine) -> Result<(), ErrorType> {
     let a = match machine.pop() {
         Some(n) => n,
         None => return Err(ErrorType::StackUnderflow)
     };
+
+    if a != 0 {
+        return Ok(());
+    }
+
+    if machine.sp >= machine.data.len() {
+        return Err(ErrorType::BranchOutOfBounds);
+    }
+
+    if let Value::Number(n) = machine.data[machine.sp] {
+        machine.sp += n as usize;
+
+        if machine.sp >= machine.data.len() {
+            return Err(ErrorType::BranchOutOfBounds);
+        }
+    } else {
+        return Err(ErrorType::InvalidOffset);
+    }
+
+    Ok(())
+}
+
+pub fn branch(machine: &mut Machine) -> Result<(), ErrorType> {
+    if machine.sp >= machine.data.len() {
+        return Err(ErrorType::BranchOutOfBounds);
+    }
+
+    if let Value::Number(n) = machine.data[machine.sp] {
+        machine.sp += n as usize;
+
+        if machine.sp >= machine.data.len() {
+            return Err(ErrorType::BranchOutOfBounds);
+        }
+    } else {
+        return Err(ErrorType::InvalidOffset);
+    }
 
     Ok(())
 }

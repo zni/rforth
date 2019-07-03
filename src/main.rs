@@ -66,6 +66,14 @@ fn run(machine: &mut vm::machine::Machine, line: &String) {
             println!("compile operator used outside compile mode");
             had_error = true;
         },
+        Err(vm::ErrorType::InvalidOffset) => {
+            println!("invalid offset");
+            had_error = true;
+        },
+        Err(vm::ErrorType::BranchOutOfBounds) => {
+            println!("branch out of bounds");
+            had_error = true;
+        },
     }
 
     if !had_error {

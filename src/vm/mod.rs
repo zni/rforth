@@ -8,8 +8,10 @@ pub enum Value {
 }
 
 pub enum ErrorType {
-    OutsideCompileMode,
+    BranchOutOfBounds,
     CompilationError,
+    InvalidOffset,
+    OutsideCompileMode,
+    StackUnderflow,
     WordNotFound,
-    StackUnderflow
 }
