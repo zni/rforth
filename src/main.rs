@@ -1,7 +1,78 @@
+use std::fs::File;
+use std::io::prelude::*;
+use std::env;
 use std::io;
+use std::path::Path;
 use std::process;
 
 mod vm;
+
+fn main() {
+    let mut machine = vm::machine::Machine::new();
+    let args: Vec<String> = env::args().collect();
+    if args.len() > 2 {
+        println!("usage: rforth <file>");
+        process::exit(1);
+    } else if args.len() == 2 {
+        run_file(&mut machine, &args[1]);
+    } else {
+        run_prompt(&mut machine);
+    }
+}
+
+fn run_file(machine: &mut vm::machine::Machine, file: &String) {
+    let path = Path::new(file);
+    let mut file = File::open(&path)
+        .expect("Failed to open file.");
+
+    let mut source = String::new();
+    file.read_to_string(&mut source)
+        .expect("Failed to read file.");
+
+    run(machine, &source);
+}
+
+fn run_prompt(machine: &mut vm::machine::Machine) {
+
+    loop {
+        let mut line = String::new();
+        if let Err(_) = io::stdin().read_line(&mut line) {
+            println!("Failed to read line.");
+            process::exit(1);
+        }
+
+        run(machine, &line);
+    }
+}
+
+fn run(machine: &mut vm::machine::Machine, line: &String) {
+    let input = tokenize_input(line);
+
+    let mut had_error: bool = false;
+    for token in input {
+        match machine.execute(&token) {
+            Ok(_) => (),
+            Err(vm::ErrorType::WordNotFound) => {
+                had_error = true;
+                break;
+            },
+            Err(vm::ErrorType::StackUnderflow) => {
+                println!("stack underflow");
+                had_error = true;
+                break;
+            },
+            Err(vm::ErrorType::CompilationError) => {
+                println!("compilation error");
+                had_error = true;
+                break;
+            },
+        }
+    }
+
+    if !had_error {
+        println!("ok");
+    }
+}
 
 fn tokenize_input(line: &String) -> Vec<vm::Value> {
     let words = line.split_whitespace();
@@ -22,53 +93,3 @@ fn tokenize_input(line: &String) -> Vec<vm::Value> {
     input
 }
 
-fn run(machine: &mut vm::machine::Machine, line: &String) {
-    let input = tokenize_input(line);
-
-    let mut had_error: bool = false;
-    for token in input {
-        if let vm::Value::Word(word) = &token {
-            if word == ":" {
-                match machine.compile(line) {
-                    Ok(_) => break,
-                    Err(vm::ErrorType::CompilationError) => {
-                        println!("compilation error");
-                        had_error = true;
-                        break;
-                    },
-                    _ => ()
-                }
-            }
-        }
-
-        match machine.execute(&token) {
-            Ok(_) => (),
-            Err(vm::ErrorType::WordNotFound) => {
-                had_error = true;
-            },
-            Err(vm::ErrorType::StackUnderflow) => {
-                println!("stack underflow");
-                had_error = true;
-            },
-            _ => (),
-        }
-    }
-
-    if !had_error {
-        println!("ok");
-    }
-}
-
-fn main() {
-    let mut machine = vm::machine::Machine::new();
-
-    loop {
-        let mut line = String::new();
-        if let Err(_) = io::stdin().read_line(&mut line) {
-            println!("Failed to read line.");
-            process::exit(1);
-        }
-
-        run(&mut machine, &line);
-    }
-}
