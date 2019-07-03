@@ -60,15 +60,13 @@ impl Machine {
     }
 
     pub fn execute(&mut self, value: &Value) -> Result<(), ErrorType> {
-        if let Value::Word(s) = value {
-            if s == ";" {
-                self.compile_mode = false;
-            }
-        }
+        let current_word = match value {
+            Value::Number(n) => n.to_string(),
+            Value::Word(w) => w.clone(),
+        };
 
-        if self.compile_mode {
-            self.compile_buffer.push(value.clone());
-            return Ok(());
+        if self.compile_mode && current_word != ";" {
+            return self.compile_word(value);
         }
 
         let word = match value {
@@ -102,6 +100,11 @@ impl Machine {
 
         return Ok(());
     }
+
+    fn compile_word(&mut self, value: &Value) -> Result<(), ErrorType> {
+        self.compile_buffer.push(value.clone());
+        return Ok(());
+    }
 }
 
 fn compile(machine: &mut Machine) -> Result<(), ErrorType> {
@@ -110,9 +113,13 @@ fn compile(machine: &mut Machine) -> Result<(), ErrorType> {
 }
 
 fn finish_compile(machine: &mut Machine) -> Result<(), ErrorType> {
+    if !machine.compile_mode {
+        return Err(ErrorType::OutsideCompileMode);
+    }
+
     machine.compile_mode = false;
 
-    let mut word;
+    let word;
     if machine.compile_buffer.len() > 0 {
         word = match machine.compile_buffer.remove(0) {
             Value::Number(n) => n.to_string(),
@@ -120,6 +127,17 @@ fn finish_compile(machine: &mut Machine) -> Result<(), ErrorType> {
         };
     } else {
         return Err(ErrorType::CompilationError);
+    }
+
+    // Check if words in definition are valid.
+    for word in machine.compile_buffer.clone() {
+        if let Value::Word(w) = word {
+            if let None = machine.dictionary.get(&w) {
+                println!("undefined word: {}", w);
+                machine.compile_buffer.clear();
+                return Err(ErrorType::CompilationError);
+            }
+        }
     }
 
     machine.dictionary.insert(word.clone(), Function::UserDefined(machine.compile_buffer.clone()));

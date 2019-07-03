@@ -66,6 +66,11 @@ fn run(machine: &mut vm::machine::Machine, line: &String) {
                 had_error = true;
                 break;
             },
+            Err(vm::ErrorType::OutsideCompileMode) => {
+                println!("compile operator used outside compile mode");
+                had_error = true;
+                break;
+            },
         }
     }
 
