@@ -43,6 +43,10 @@ impl Machine {
         dictionary.insert(String::from("="), Function::Builtin(instructions::eq));
         dictionary.insert(String::from(">"), Function::Builtin(instructions::greater_than));
         dictionary.insert(String::from("<"), Function::Builtin(instructions::less_than));
+        dictionary.insert(String::from("and"), Function::Builtin(instructions::and));
+        dictionary.insert(String::from("or"), Function::Builtin(instructions::or));
+        dictionary.insert(String::from("invert"), Function::Builtin(instructions::invert));
+
         Machine {
             compile_mode: false,
             compile_buffer: Vec::new(),

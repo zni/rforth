@@ -189,3 +189,44 @@ pub fn less_than(machine: &mut Machine) -> Result<(), ErrorType> {
 
     Ok(())
 }
+
+pub fn and(machine: &mut Machine) -> Result<(), ErrorType> {
+    let a = match machine.pop() {
+        Some(n) => n,
+        None => return Err(ErrorType::StackUnderflow)
+    };
+    let b = match machine.pop() {
+        Some(n) => n,
+        None => return Err(ErrorType::StackUnderflow)
+    };
+
+    machine.push(a & b);
+
+    Ok(())
+}
+
+pub fn or(machine: &mut Machine) -> Result<(), ErrorType> {
+    let a = match machine.pop() {
+        Some(n) => n,
+        None => return Err(ErrorType::StackUnderflow)
+    };
+    let b = match machine.pop() {
+        Some(n) => n,
+        None => return Err(ErrorType::StackUnderflow)
+    };
+
+    machine.push(a | b);
+
+    Ok(())
+}
+
+pub fn invert(machine: &mut Machine) -> Result<(), ErrorType> {
+    let a = match machine.pop() {
+        Some(n) => n,
+        None => return Err(ErrorType::StackUnderflow)
+    };
+
+    machine.push(!a);
+
+    Ok(())
+}
