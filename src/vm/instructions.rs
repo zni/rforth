@@ -162,7 +162,7 @@ pub fn greater_than(machine: &mut Machine) -> Result<(), ErrorType> {
         None => return Err(ErrorType::StackUnderflow)
     };
 
-    if a > b {
+    if b > a {
         machine.push(-1);
     } else {
         machine.push(0);
@@ -181,7 +181,7 @@ pub fn less_than(machine: &mut Machine) -> Result<(), ErrorType> {
         None => return Err(ErrorType::StackUnderflow)
     };
 
-    if a < b {
+    if b < a {
         machine.push(-1);
     } else {
         machine.push(0);
