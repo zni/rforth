@@ -23,7 +23,7 @@ pub struct Machine {
     pub compile_buffer: Vec<Value>,
     pub dictionary: HashMap<String, Function>,
     pub stack: Vec<i32>,
-    pub return_stack: Vec<i32>,
+    pub return_stack: Vec<usize>,
     pub sp: usize,
     pub data: Vec<Value>,
 }
@@ -119,7 +119,11 @@ impl Machine {
                 },
                 Some(Function::UserDefined(f)) => {
                     let function = f.clone();
-                    return self.execute(&function);
+                    self.return_stack.push(self.sp);
+                    if let Err(e) = self.execute(&function) {
+                        return Err(e);
+                    };
+                    self.sp = self.return_stack.pop().unwrap();
                 },
                 Some(Function::Action) => {
                     return Err(ErrorType::OutsideCompileMode);
