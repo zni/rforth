@@ -7,7 +7,8 @@ use crate::vm::Value;
 
 pub enum Function {
     Builtin(fn(&mut Machine) -> Result<(), ErrorType>),
-    UserDefined(Vec<Value>)
+    UserDefined(Vec<Value>),
+    Action,
 }
 
 impl fmt::Debug for Function {
@@ -21,7 +22,8 @@ pub struct Machine {
     pub compile_mode: bool,
     pub compile_buffer: Vec<Value>,
     pub dictionary: HashMap<String, Function>,
-    pub stack: Vec<i32>
+    pub stack: Vec<i32>,
+    pub return_stack: Vec<i32>,
 }
 
 impl Machine {
@@ -46,12 +48,19 @@ impl Machine {
         dictionary.insert(String::from("and"), Function::Builtin(instructions::and));
         dictionary.insert(String::from("or"), Function::Builtin(instructions::or));
         dictionary.insert(String::from("invert"), Function::Builtin(instructions::invert));
+        dictionary.insert(String::from("branch0"), Function::Builtin(instructions::branch0));
+        dictionary.insert(String::from("if"), Function::Action);
+        dictionary.insert(String::from("then"), Function::Action);
+        dictionary.insert(String::from("else"), Function::Action);
+        dictionary.insert(String::from("do"), Function::Action);
+        dictionary.insert(String::from("loop"), Function::Action);
 
         Machine {
             compile_mode: false,
             compile_buffer: Vec::new(),
             dictionary,
-            stack: Vec::new()
+            stack: Vec::new(),
+            return_stack: Vec::new(),
         }
     }
 
@@ -63,46 +72,50 @@ impl Machine {
         self.stack.pop()
     }
 
-    pub fn execute(&mut self, value: &Value) -> Result<(), ErrorType> {
-        let current_word = match value {
-            Value::Number(n) => n.to_string(),
-            Value::Word(w) => w.clone(),
-        };
+    pub fn execute(&mut self, input: &Vec<Value>) -> Result<(), ErrorType> {
+        for value in input {
+            let current_word = match value {
+                Value::Number(n) => n.to_string(),
+                Value::Word(w) => w.clone(),
+            };
 
-        if self.compile_mode && current_word != ";" {
-            return self.compile_word(value);
-        }
+            if self.compile_mode && current_word != ";" {
+                if let Err(e) = self.compile_word(value) {
+                    return Err(e);
+                }
 
-        let word = match value {
-            Value::Number(n) => {
-                self.push(*n);
-                return Ok(());
-            },
-            Value::Word(s) => s,
-        };
-
-        match self.dictionary.get(word) {
-            Some(Function::Builtin(f)) => f(self),
-            Some(Function::UserDefined(f)) => {
-                let function = f.clone();
-                return self.execute_function(&function);
-            },
-            None => {
-                println!("{}?", word);
-                Err(ErrorType::WordNotFound)
+                continue;
             }
-        }
-    }
 
-    fn execute_function(&mut self, function: &Vec<Value>) -> Result<(), ErrorType>  {
-        for word in function {
-            match self.execute(word) {
-                Ok(_) => continue,
-                Err(e) => return Err(e)
-            }
+            let word = match value {
+                Value::Number(n) => {
+                    self.push(*n);
+                    continue;
+                },
+                Value::Word(s) => s,
+            };
+
+            match self.dictionary.get(word) {
+                Some(Function::Builtin(f)) => {
+                    if let Err(e) = f(self) {
+                        return Err(e);
+                    }
+                },
+                Some(Function::UserDefined(f)) => {
+                    let function = f.clone();
+                    return self.execute(&function);
+                },
+                Some(Function::Action) => {
+                    return Err(ErrorType::OutsideCompileMode);
+                },
+                None => {
+                    println!("{}?", word);
+                    return Err(ErrorType::WordNotFound);
+                }
+            };
         }
 
-        return Ok(());
+        return Ok(())
     }
 
     fn compile_word(&mut self, value: &Value) -> Result<(), ErrorType> {
@@ -123,6 +136,7 @@ fn finish_compile(machine: &mut Machine) -> Result<(), ErrorType> {
 
     machine.compile_mode = false;
 
+    // Get the compiled definition name.
     let word;
     if machine.compile_buffer.len() > 0 {
         word = match machine.compile_buffer.remove(0) {

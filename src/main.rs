@@ -49,29 +49,23 @@ fn run(machine: &mut vm::machine::Machine, line: &String) {
     let input = tokenize_input(line);
 
     let mut had_error: bool = false;
-    for token in input {
-        match machine.execute(&token) {
-            Ok(_) => (),
-            Err(vm::ErrorType::WordNotFound) => {
-                had_error = true;
-                break;
-            },
-            Err(vm::ErrorType::StackUnderflow) => {
-                println!("stack underflow");
-                had_error = true;
-                break;
-            },
-            Err(vm::ErrorType::CompilationError) => {
-                println!("compilation error");
-                had_error = true;
-                break;
-            },
-            Err(vm::ErrorType::OutsideCompileMode) => {
-                println!("compile operator used outside compile mode");
-                had_error = true;
-                break;
-            },
-        }
+    match machine.execute(&input) {
+        Ok(_) => (),
+        Err(vm::ErrorType::WordNotFound) => {
+            had_error = true;
+        },
+        Err(vm::ErrorType::StackUnderflow) => {
+            println!("stack underflow");
+            had_error = true;
+        },
+        Err(vm::ErrorType::CompilationError) => {
+            println!("compilation error");
+            had_error = true;
+        },
+        Err(vm::ErrorType::OutsideCompileMode) => {
+            println!("compile operator used outside compile mode");
+            had_error = true;
+        },
     }
 
     if !had_error {

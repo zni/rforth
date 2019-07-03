@@ -230,3 +230,13 @@ pub fn invert(machine: &mut Machine) -> Result<(), ErrorType> {
 
     Ok(())
 }
+
+// TODO
+pub fn branch0(machine: &mut Machine) -> Result<(), ErrorType> {
+    let a = match machine.pop() {
+        Some(n) => n,
+        None => return Err(ErrorType::StackUnderflow)
+    };
+
+    Ok(())
+}
