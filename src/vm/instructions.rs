@@ -244,6 +244,7 @@ pub fn branch0(machine: &mut Machine) -> Result<(), ErrorType> {
     };
 
     if a != 0 {
+        machine.sp += 1;
         return Ok(());
     }
 
