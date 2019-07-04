@@ -134,6 +134,25 @@ pub fn sdot(machine: &mut Machine) -> Result<(), ErrorType> {
     Ok(())
 }
 
+pub fn dot_quote(machine: &mut Machine) -> Result<(), ErrorType> {
+    while machine.pc < machine.data.len() {
+        match &machine.data[machine.pc] {
+            Value::Word(w) => {
+                if w.contains("\"") {
+                    let w_quote = w.replace("\"", "");
+                    println!("{}", w_quote);
+                    machine.pc += 1;
+                    break;
+                }
+                print!("{} ", w)
+            },
+            Value::Number(n) => print!("{} ", n.to_string()),
+        }
+        machine.pc += 1;
+    }
+    Ok(())
+}
+
 pub fn eq(machine: &mut Machine) -> Result<(), ErrorType> {
     let a = match machine.pop() {
         Some(n) => n,
@@ -301,10 +320,12 @@ pub fn if_(machine: &mut Machine) -> Result<(), ErrorType> {
         None => return Err(ErrorType::StackUnderflow)
     };
 
+    // Execute the if branch.
     if a != 0 {
         return Ok(());
     }
 
+    // Find our matching then or else.
     let mut ifs = 0;
     while machine.pc < machine.data.len() {
         if let Value::Word(w) = &machine.data[machine.pc] {
@@ -340,10 +361,12 @@ pub fn else_(machine: &mut Machine) -> Result<(), ErrorType> {
         None => 1,
     };
 
+    // Execute the else branch.
     if a == 0 {
         return Ok(());
     }
 
+    // Find our matching 'then'.
     let mut ifs = 0;
     while machine.pc < machine.data.len() {
         if let Value::Word(w) = &machine.data[machine.pc] {

@@ -46,6 +46,7 @@ impl Machine {
         dictionary.insert(String::from("rot"), Function::Builtin(instructions::rot));
         dictionary.insert(String::from("."), Function::Builtin(instructions::dot));
         dictionary.insert(String::from(".s"), Function::Builtin(instructions::sdot));
+        dictionary.insert(String::from(".\""), Function::Builtin(instructions::dot_quote));
         dictionary.insert(String::from("="), Function::Builtin(instructions::eq));
         dictionary.insert(String::from(">"), Function::Builtin(instructions::greater_than));
         dictionary.insert(String::from("<"), Function::Builtin(instructions::less_than));
@@ -87,7 +88,7 @@ impl Machine {
 
     pub fn execute(&mut self, input: &Vec<Value>) -> Result<(), ErrorType> {
         self.pc = 0;
-        self.data = input.clone();
+        self.data = input.to_vec();
         while self.pc < input.len() {
             // Get value.
             let value = &input[self.pc];
