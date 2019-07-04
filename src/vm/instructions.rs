@@ -311,7 +311,7 @@ pub fn if_(machine: &mut Machine) -> Result<(), ErrorType> {
             if w == "then" && ifs == 0 {
                 return Ok(());
             } else if w == "else" && ifs == 0 {
-                machine.return_stack.push(0);
+                machine.control_flow_stack.push(0);
                 return Ok(());
             } else if w == "if" {
                 ifs += 1;
@@ -335,7 +335,7 @@ pub fn then(_machine: &mut Machine) -> Result<(), ErrorType> {
 }
 
 pub fn else_(machine: &mut Machine) -> Result<(), ErrorType> {
-    let a = match machine.return_stack.pop() {
+    let a = match machine.control_flow_stack.pop() {
         Some(n) => n,
         None => 1,
     };

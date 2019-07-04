@@ -24,6 +24,7 @@ pub struct Machine {
     pub dictionary: HashMap<String, Function>,
     pub stack: Vec<i32>,
     pub return_stack: Vec<usize>,
+    pub control_flow_stack: Vec<i32>,
     pub sp: usize,
     pub data: Vec<Value>,
     pub context: Vec<Box<Vec<Value>>>,
@@ -69,6 +70,7 @@ impl Machine {
             dictionary,
             stack: Vec::new(),
             return_stack: Vec::new(),
+            control_flow_stack: Vec::new(),
             sp: 0,
             data: Vec::new(),
             context: Vec::new(),
@@ -133,7 +135,7 @@ impl Machine {
                     self.data = *self.context.pop().unwrap();
                     self.sp = match self.return_stack.pop() {
                         Some(n) => n,
-                        None => return Err(ErrorType::StackUnderflow)
+                        None => return Err(ErrorType::StackUnderflow),
                     };
                 },
                 Some(Function::Action) => {
@@ -189,11 +191,11 @@ fn finish_compile(machine: &mut Machine) -> Result<(), ErrorType> {
         }
     }
 
-    println!("compile_buffer: {:?}", machine.compile_buffer);
-    if let Err(e) = translate_if(&mut machine.compile_buffer) {
-        return Err(e);
-    }
-    println!("compile_buffer: {:?}", machine.compile_buffer);
+    //println!("compile_buffer: {:?}", machine.compile_buffer);
+    //if let Err(e) = translate_if(&mut machine.compile_buffer) {
+    //    return Err(e);
+    //}
+    //println!("compile_buffer: {:?}", machine.compile_buffer);
     machine.dictionary.insert(word.clone(), Function::UserDefined(machine.compile_buffer.clone()));
 
     machine.compile_buffer.clear();
