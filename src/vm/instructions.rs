@@ -294,3 +294,76 @@ pub fn from_r(machine: &mut Machine) -> Result<(), ErrorType> {
     machine.push(a as i32);
     Ok(())
 }
+
+pub fn if_(machine: &mut Machine) -> Result<(), ErrorType> {
+    let a = match machine.pop() {
+        Some(n) => n,
+        None => return Err(ErrorType::StackUnderflow)
+    };
+
+    if a != 0 {
+        return Ok(());
+    }
+
+    let mut ifs = 0;
+    while machine.sp < machine.data.len() {
+        if let Value::Word(w) = &machine.data[machine.sp] {
+            if w == "then" && ifs == 0 {
+                return Ok(());
+            } else if w == "else" && ifs == 0 {
+                machine.push(0);
+                return Ok(());
+            } else if w == "if" {
+                ifs += 1;
+                machine.sp += 1;
+            } else if w == "then" && ifs != 0 {
+                ifs -= 1;
+                machine.sp += 1;
+            } else {
+                machine.sp += 1;
+            }
+        } else {
+            machine.sp += 1;
+        }
+    }
+
+    Err(ErrorType::UnbalancedControl)
+}
+
+pub fn then(machine: &mut Machine) -> Result<(), ErrorType> {
+    Ok(())
+}
+
+pub fn else_(machine: &mut Machine) -> Result<(), ErrorType> {
+    let a = match machine.pop() {
+        Some(n) => n,
+        None => 0,
+    };
+
+    if a == 0 {
+        return Ok(());
+    } else {
+        machine.push(a);
+    }
+
+    let mut ifs = 0;
+    while machine.sp < machine.data.len() {
+        if let Value::Word(w) = &machine.data[machine.sp] {
+            if w == "then" && ifs == 0 {
+                return Ok(());
+            } else if w == "if" {
+                ifs += 1;
+                machine.sp += 1;
+            } else if w == "then" && ifs != 0 {
+                ifs -= 1;
+                machine.sp += 1;
+            } else {
+                machine.sp += 1;
+            }
+        } else {
+            machine.sp += 1;
+        }
+    }
+
+    Err(ErrorType::UnbalancedControl)
+}

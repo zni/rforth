@@ -56,9 +56,9 @@ impl Machine {
         dictionary.insert(String::from(">r"), Function::Builtin(instructions::to_r));
         dictionary.insert(String::from("r>"), Function::Builtin(instructions::from_r));
 
-        dictionary.insert(String::from("if"), Function::Action);
-        dictionary.insert(String::from("then"), Function::Action);
-        dictionary.insert(String::from("else"), Function::Action);
+        dictionary.insert(String::from("if"), Function::Builtin(instructions::if_));
+        dictionary.insert(String::from("then"), Function::Builtin(instructions::then));
+        dictionary.insert(String::from("else"), Function::Builtin(instructions::else_));
         dictionary.insert(String::from("do"), Function::Action);
         dictionary.insert(String::from("loop"), Function::Action);
 
