@@ -181,7 +181,9 @@ fn finish_compile(machine: &mut Machine) -> Result<(), ErrorType> {
     }
 
     println!("compile_buffer: {:?}", machine.compile_buffer);
-    translate_if(&mut machine.compile_buffer);
+    if let Err(e) = translate_if(&mut machine.compile_buffer) {
+        return Err(e);
+    }
     println!("compile_buffer: {:?}", machine.compile_buffer);
     machine.dictionary.insert(word.clone(), Function::UserDefined(machine.compile_buffer.clone()));
 
@@ -189,32 +191,46 @@ fn finish_compile(machine: &mut Machine) -> Result<(), ErrorType> {
     Ok(())
 }
 
-fn translate_if(values: &mut Vec<Value>) {
+fn translate_if(values: &mut Vec<Value>) -> Result<(), ErrorType> {
     let mut i = 0;
     while i < values.len() {
         if let Value::Word(w) = &values[i] {
             if w == "if" {
                 values[i] = Value::Word("0branch".to_string());
-                let offset = calculate_offset(i, values);
-                values.insert(i + 1, Value::Number(offset));
+                let offset = match calculate_offset(i, values) {
+                    Ok(n) => n,
+                    Err(e) => return Err(e),
+                };
+                values.insert(i + 1, Value::Number(offset - 1));
+                values.remove(i + offset as usize);
             }
         }
         i += 1;
     }
+
+    return Ok(());
 }
 
-fn calculate_offset(i: usize, values: &mut Vec<Value>) -> i32 {
-    let mut offset: i32 = 0;
+fn calculate_offset(i: usize, values: &mut Vec<Value>) -> Result<i32, ErrorType> {
+    let mut offset: i32 = 1;
+    let mut ifs = 0;
     let iter = values.iter().skip(i);
     for v in iter {
         if let Value::Word(w) = &v {
-            if w == "then" {
-                return offset;
+            if w == "then" && ifs == 0 {
+                return Ok(offset);
+            } else if w == "if" {
+                ifs += 1;
+                offset += 1;
+            } else if w == "then" && ifs != 0 {
+                ifs -= 1;
+                offset -= 1;
             }
+            offset += 1;
         } else {
             offset += 1;
         }
     }
 
-    return -1;
+    return Err(ErrorType::UnbalancedControl);
 }

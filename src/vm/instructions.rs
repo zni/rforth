@@ -253,10 +253,6 @@ pub fn branch0(machine: &mut Machine) -> Result<(), ErrorType> {
 
     if let Value::Number(n) = machine.data[machine.sp] {
         machine.sp += n as usize;
-
-        if machine.sp >= machine.data.len() {
-            return Err(ErrorType::BranchOutOfBounds);
-        }
     } else {
         return Err(ErrorType::InvalidOffset);
     }
@@ -271,10 +267,6 @@ pub fn branch(machine: &mut Machine) -> Result<(), ErrorType> {
 
     if let Value::Number(n) = machine.data[machine.sp] {
         machine.sp += n as usize;
-
-        if machine.sp >= machine.data.len() {
-            return Err(ErrorType::BranchOutOfBounds);
-        }
     } else {
         return Err(ErrorType::InvalidOffset);
     }
