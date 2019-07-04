@@ -82,7 +82,6 @@ impl Machine {
         self.sp = 0;
         self.data = input.clone();
         while self.sp < input.len() {
-
             // Get value.
             let value = &input[self.sp];
             self.sp += 1;
@@ -123,7 +122,10 @@ impl Machine {
                     if let Err(e) = self.execute(&function) {
                         return Err(e);
                     };
-                    self.sp = self.return_stack.pop().unwrap();
+                    self.sp = match self.return_stack.pop() {
+                        Some(n) => n,
+                        None => return Err(ErrorType::StackUnderflow)
+                    };
                 },
                 Some(Function::Action) => {
                     return Err(ErrorType::OutsideCompileMode);
@@ -178,8 +180,41 @@ fn finish_compile(machine: &mut Machine) -> Result<(), ErrorType> {
         }
     }
 
+    println!("compile_buffer: {:?}", machine.compile_buffer);
+    translate_if(&mut machine.compile_buffer);
+    println!("compile_buffer: {:?}", machine.compile_buffer);
     machine.dictionary.insert(word.clone(), Function::UserDefined(machine.compile_buffer.clone()));
 
     machine.compile_buffer.clear();
     Ok(())
+}
+
+fn translate_if(values: &mut Vec<Value>) {
+    let mut i = 0;
+    while i < values.len() {
+        if let Value::Word(w) = &values[i] {
+            if w == "if" {
+                values[i] = Value::Word("0branch".to_string());
+                let offset = calculate_offset(i, values);
+                values.insert(i + 1, Value::Number(offset));
+            }
+        }
+        i += 1;
+    }
+}
+
+fn calculate_offset(i: usize, values: &mut Vec<Value>) -> i32 {
+    let mut offset: i32 = 0;
+    let iter = values.iter().skip(i);
+    for v in iter {
+        if let Value::Word(w) = &v {
+            if w == "then" {
+                return offset;
+            }
+        } else {
+            offset += 1;
+        }
+    }
+
+    return -1;
 }

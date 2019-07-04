@@ -13,5 +13,6 @@ pub enum ErrorType {
     InvalidOffset,
     OutsideCompileMode,
     StackUnderflow,
+    UnbalancedControl,
     WordNotFound,
 }

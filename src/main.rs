@@ -74,6 +74,10 @@ fn run(machine: &mut vm::machine::Machine, line: &String) {
             println!("branch out of bounds");
             had_error = true;
         },
+        Err(vm::ErrorType::UnbalancedControl) => {
+            println!("unbalanced control structure");
+            had_error = true;
+        }
     }
 
     if !had_error {
