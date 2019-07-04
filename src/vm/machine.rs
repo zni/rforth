@@ -26,6 +26,7 @@ pub struct Machine {
     pub return_stack: Vec<usize>,
     pub sp: usize,
     pub data: Vec<Value>,
+    pub context: Vec<Box<Vec<Value>>>,
 }
 
 impl Machine {
@@ -70,6 +71,7 @@ impl Machine {
             return_stack: Vec::new(),
             sp: 0,
             data: Vec::new(),
+            context: Vec::new(),
         }
     }
 
@@ -122,9 +124,13 @@ impl Machine {
                 Some(Function::UserDefined(f)) => {
                     let function = f.clone();
                     self.return_stack.push(self.sp);
+                    self.context.push(Box::new(self.data.clone()));
+
                     if let Err(e) = self.execute(&function) {
                         return Err(e);
                     };
+
+                    self.data = *self.context.pop().unwrap();
                     self.sp = match self.return_stack.pop() {
                         Some(n) => n,
                         None => return Err(ErrorType::StackUnderflow)
