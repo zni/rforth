@@ -53,6 +53,9 @@ impl Machine {
         dictionary.insert(String::from("clearstack"), Function::Builtin(instructions::clearstack));
         dictionary.insert(String::from("0branch"), Function::Builtin(instructions::branch0));
         dictionary.insert(String::from("branch"), Function::Builtin(instructions::branch));
+        dictionary.insert(String::from(">r"), Function::Builtin(instructions::to_r));
+        dictionary.insert(String::from("r>"), Function::Builtin(instructions::from_r));
+
         dictionary.insert(String::from("if"), Function::Action);
         dictionary.insert(String::from("then"), Function::Action);
         dictionary.insert(String::from("else"), Function::Action);

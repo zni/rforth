@@ -274,3 +274,23 @@ pub fn branch(machine: &mut Machine) -> Result<(), ErrorType> {
 
     Ok(())
 }
+
+pub fn to_r(machine: &mut Machine) -> Result<(), ErrorType> {
+    let a = match machine.pop() {
+        Some(n) => n,
+        None => return Err(ErrorType::StackUnderflow)
+    };
+
+    machine.return_stack.push(a as usize);
+    Ok(())
+}
+
+pub fn from_r(machine: &mut Machine) -> Result<(), ErrorType> {
+    let a = match machine.return_stack.pop() {
+        Some(n) => n,
+        None => return Err(ErrorType::StackUnderflow)
+    };
+
+    machine.push(a as i32);
+    Ok(())
+}
