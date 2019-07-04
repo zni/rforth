@@ -25,7 +25,7 @@ pub struct Machine {
     pub stack: Vec<i32>,
     pub return_stack: Vec<usize>,
     pub control_flow_stack: Vec<i32>,
-    pub sp: usize,
+    pub pc: usize,
     pub data: Vec<Value>,
     pub context: Vec<Box<Vec<Value>>>,
 }
@@ -71,7 +71,7 @@ impl Machine {
             stack: Vec::new(),
             return_stack: Vec::new(),
             control_flow_stack: Vec::new(),
-            sp: 0,
+            pc: 0,
             data: Vec::new(),
             context: Vec::new(),
         }
@@ -86,12 +86,12 @@ impl Machine {
     }
 
     pub fn execute(&mut self, input: &Vec<Value>) -> Result<(), ErrorType> {
-        self.sp = 0;
+        self.pc = 0;
         self.data = input.clone();
-        while self.sp < input.len() {
+        while self.pc < input.len() {
             // Get value.
-            let value = &input[self.sp];
-            self.sp += 1;
+            let value = &input[self.pc];
+            self.pc += 1;
 
             // Convert the current cell to string.
             let current_word = match value {
@@ -125,7 +125,7 @@ impl Machine {
                 },
                 Some(Function::UserDefined(f)) => {
                     let function = f.clone();
-                    self.return_stack.push(self.sp);
+                    self.return_stack.push(self.pc);
                     self.context.push(Box::new(self.data.clone()));
 
                     if let Err(e) = self.execute(&function) {
@@ -133,7 +133,7 @@ impl Machine {
                     };
 
                     self.data = *self.context.pop().unwrap();
-                    self.sp = match self.return_stack.pop() {
+                    self.pc = match self.return_stack.pop() {
                         Some(n) => n,
                         None => return Err(ErrorType::StackUnderflow),
                     };

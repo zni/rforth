@@ -244,16 +244,16 @@ pub fn branch0(machine: &mut Machine) -> Result<(), ErrorType> {
     };
 
     if a != 0 {
-        machine.sp += 1;
+        machine.pc += 1;
         return Ok(());
     }
 
-    if machine.sp >= machine.data.len() {
+    if machine.pc >= machine.data.len() {
         return Err(ErrorType::BranchOutOfBounds);
     }
 
-    if let Value::Number(n) = machine.data[machine.sp] {
-        machine.sp += n as usize;
+    if let Value::Number(n) = machine.data[machine.pc] {
+        machine.pc += n as usize;
     } else {
         return Err(ErrorType::InvalidOffset);
     }
@@ -262,12 +262,12 @@ pub fn branch0(machine: &mut Machine) -> Result<(), ErrorType> {
 }
 
 pub fn branch(machine: &mut Machine) -> Result<(), ErrorType> {
-    if machine.sp >= machine.data.len() {
+    if machine.pc >= machine.data.len() {
         return Err(ErrorType::BranchOutOfBounds);
     }
 
-    if let Value::Number(n) = machine.data[machine.sp] {
-        machine.sp += n as usize;
+    if let Value::Number(n) = machine.data[machine.pc] {
+        machine.pc += n as usize;
     } else {
         return Err(ErrorType::InvalidOffset);
     }
@@ -306,8 +306,8 @@ pub fn if_(machine: &mut Machine) -> Result<(), ErrorType> {
     }
 
     let mut ifs = 0;
-    while machine.sp < machine.data.len() {
-        if let Value::Word(w) = &machine.data[machine.sp] {
+    while machine.pc < machine.data.len() {
+        if let Value::Word(w) = &machine.data[machine.pc] {
             if w == "then" && ifs == 0 {
                 return Ok(());
             } else if w == "else" && ifs == 0 {
@@ -315,15 +315,15 @@ pub fn if_(machine: &mut Machine) -> Result<(), ErrorType> {
                 return Ok(());
             } else if w == "if" {
                 ifs += 1;
-                machine.sp += 1;
+                machine.pc += 1;
             } else if w == "then" && ifs != 0 {
                 ifs -= 1;
-                machine.sp += 1;
+                machine.pc += 1;
             } else {
-                machine.sp += 1;
+                machine.pc += 1;
             }
         } else {
-            machine.sp += 1;
+            machine.pc += 1;
         }
     }
 
@@ -345,21 +345,21 @@ pub fn else_(machine: &mut Machine) -> Result<(), ErrorType> {
     }
 
     let mut ifs = 0;
-    while machine.sp < machine.data.len() {
-        if let Value::Word(w) = &machine.data[machine.sp] {
+    while machine.pc < machine.data.len() {
+        if let Value::Word(w) = &machine.data[machine.pc] {
             if w == "then" && ifs == 0 {
                 return Ok(());
             } else if w == "if" {
                 ifs += 1;
-                machine.sp += 1;
+                machine.pc += 1;
             } else if w == "then" && ifs != 0 {
                 ifs -= 1;
-                machine.sp += 1;
+                machine.pc += 1;
             } else {
-                machine.sp += 1;
+                machine.pc += 1;
             }
         } else {
-            machine.sp += 1;
+            machine.pc += 1;
         }
     }
 
