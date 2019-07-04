@@ -311,7 +311,7 @@ pub fn if_(machine: &mut Machine) -> Result<(), ErrorType> {
             if w == "then" && ifs == 0 {
                 return Ok(());
             } else if w == "else" && ifs == 0 {
-                machine.push(0);
+                machine.return_stack.push(0);
                 return Ok(());
             } else if w == "if" {
                 ifs += 1;
@@ -330,20 +330,18 @@ pub fn if_(machine: &mut Machine) -> Result<(), ErrorType> {
     Err(ErrorType::UnbalancedControl)
 }
 
-pub fn then(machine: &mut Machine) -> Result<(), ErrorType> {
+pub fn then(_machine: &mut Machine) -> Result<(), ErrorType> {
     Ok(())
 }
 
 pub fn else_(machine: &mut Machine) -> Result<(), ErrorType> {
-    let a = match machine.pop() {
+    let a = match machine.return_stack.pop() {
         Some(n) => n,
-        None => 0,
+        None => 1,
     };
 
     if a == 0 {
         return Ok(());
-    } else {
-        machine.push(a);
     }
 
     let mut ifs = 0;
