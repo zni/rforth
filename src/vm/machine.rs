@@ -39,6 +39,7 @@ impl Machine {
         dictionary.insert(String::from("-"), Function::Builtin(instructions::sub));
         dictionary.insert(String::from("*"), Function::Builtin(instructions::mult));
         dictionary.insert(String::from("/"), Function::Builtin(instructions::div));
+        dictionary.insert(String::from("mod"), Function::Builtin(instructions::mod_));
         dictionary.insert(String::from("dup"), Function::Builtin(instructions::dup));
         dictionary.insert(String::from("drop"), Function::Builtin(instructions::drop));
         dictionary.insert(String::from("swap"), Function::Builtin(instructions::swap));
@@ -182,8 +183,22 @@ fn finish_compile(machine: &mut Machine) -> Result<(), ErrorType> {
     }
 
     // Check if words in definition are valid.
+    let mut string_literal = false;
     for word in machine.compile_buffer.clone() {
         if let Value::Word(w) = word {
+            if w.contains("\"") && string_literal {
+                string_literal = false;
+                continue;
+            }
+
+            if string_literal {
+                continue;
+            }
+
+            if w == ".\"" {
+                string_literal = true;
+            }
+
             if let None = machine.dictionary.get(&w) {
                 println!("undefined word: {}", w);
                 machine.compile_buffer.clear();
@@ -192,11 +207,6 @@ fn finish_compile(machine: &mut Machine) -> Result<(), ErrorType> {
         }
     }
 
-    //println!("compile_buffer: {:?}", machine.compile_buffer);
-    //if let Err(e) = translate_if(&mut machine.compile_buffer) {
-    //    return Err(e);
-    //}
-    //println!("compile_buffer: {:?}", machine.compile_buffer);
     machine.dictionary.insert(word.clone(), Function::UserDefined(machine.compile_buffer.clone()));
 
     machine.compile_buffer.clear();

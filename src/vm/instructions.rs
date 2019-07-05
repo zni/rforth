@@ -54,6 +54,19 @@ pub fn div(machine: &mut Machine) -> Result<(), ErrorType> {
     Ok(())
 }
 
+pub fn mod_(machine: &mut Machine) -> Result<(), ErrorType> {
+    let a = match machine.pop() {
+        Some(n) => n,
+        None => return Err(ErrorType::StackUnderflow)
+    };
+    let b = match machine.pop() {
+        Some(n) => n,
+        None => return Err(ErrorType::StackUnderflow)
+    };
+    machine.push(a % b);
+    Ok(())
+}
+
 pub fn dup(machine: &mut Machine) -> Result<(), ErrorType> {
     let a = match machine.pop() {
         Some(n) => n,
