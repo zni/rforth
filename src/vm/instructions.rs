@@ -151,7 +151,7 @@ pub fn dot_quote(machine: &mut Machine) -> Result<(), ErrorType> {
     while machine.pc < machine.data.len() {
         match &machine.data[machine.pc] {
             Value::Word(w) => {
-                if w.contains("\"") {
+                if w.ends_with("\"") {
                     let w_quote = w.replace("\"", "");
                     println!("{}", w_quote);
                     machine.pc += 1;

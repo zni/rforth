@@ -186,7 +186,7 @@ fn finish_compile(machine: &mut Machine) -> Result<(), ErrorType> {
     let mut string_literal = false;
     for word in machine.compile_buffer.clone() {
         if let Value::Word(w) = word {
-            if w.contains("\"") && string_literal {
+            if w.ends_with("\"") && string_literal {
                 string_literal = false;
                 continue;
             }
